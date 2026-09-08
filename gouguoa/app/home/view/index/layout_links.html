@@ -1,0 +1,18 @@
+<div class="layui-row layui-col-space16">
+	<div class="layui-col-md12">
+		<div class="layui-card">
+			<div class="layui-card-title">办公工具</div>
+			<div class="layui-card-body">
+				<div class="website">
+					{volist name="$links" id="vo"}
+						{eq name = "$vo.target" value="1"}
+							<a class="layui-btn layui-btn-primary layui-btn-sm layui-border" href="{$vo.url}" target="_blank">{$vo.title}</a>
+						{else/}
+							<a class="layui-btn layui-btn-primary layui-btn-sm layui-border tab-a" data-href="{$vo.url}" data-id="99999{$vo.id}" data-title="{$vo.title}" href="javascript:;">{$vo.title}</a>
+						{/eq}
+					{/volist}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

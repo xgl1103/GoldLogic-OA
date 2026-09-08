@@ -1,0 +1,191 @@
+{extend name="../../base/view/common/base" /}
+{block name="style"}
+  <style>
+	.tree-left{width:280px; float:left; height:calc(100vh - 79px); overflow-y: auto; border:1px solid #eeeeee; border-right:0; background-color:#fbfbfb; padding:12px 12px 12px 5px;}
+	.tree-left::-webkit-scrollbar {width: 0;}
+	.tree-left h3{font-size:16px; height:30px; padding-left:10px; font-weight:800}
+	/* 部门人数徽章 */
+	.tree-left .dept-count{display:inline-block; margin-left:8px; padding:0 6px; height:16px; line-height:16px; font-size:11px; color:#86868B; background:#E8E8ED; border-radius:8px; vertical-align:1px;}
+	/* 职位标签 */
+	.tree-left .pos-tag{display:inline-block; margin-left:8px; padding:0 7px; height:18px; line-height:18px; font-size:11px; color:#0071E3; background:rgba(0,113,227,.08); border-radius:9px; vertical-align:1px; font-weight:400;}
+	/* 人名叶子节点 */
+	.tree-left .layui-tree-txt{color:#1D1D1F; font-size:13px;}
+	.tree-left .layui-tree-main:hover .layui-tree-txt{color:#0071E3;}
+	.tree-left .layui-tree-set.active > .layui-tree-entry > .layui-tree-main .layui-tree-txt{color:#0071E3; font-weight:600;}
+  </style>
+{/block}
+<!-- 主体 -->
+{block name="body"}
+<div class="p-page">
+	<div class="tree-left">
+		<h3>企业通讯录</h3>
+		<div id="depament"></div>
+	</div>
+	<div class="body-table" style="margin-left:280px; overflow:hidden;">
+		<form class="layui-form gg-form-bar border-t border-x" lay-filter="barsearchform">
+			<div class="layui-input-inline" style="width:360px">
+				<input type="text" name="keywords" placeholder="关键字，如：ID号/姓名/登录账号/手机号码/电子邮箱" class="layui-input" autocomplete="off" />
+			</div>
+			<div class="layui-input-inline" style="width:150px;">
+				<button class="layui-btn layui-btn-normal" lay-submit="" lay-filter="table-search"><i class="layui-icon layui-icon-search mr-1"></i>搜索</button>
+				<button type="reset" class="layui-btn layui-btn-reset" lay-filter="table-reset">清空</button>
+			</div>
+		</form>
+		<table class="layui-hide" id="test" lay-filter="test"></table>
+	</div>
+</div>
+
+<script type="text/html" id="thumb">
+	<img src="{{d.thumb}}" width="30" height="30" />
+</script>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+<script>
+	const moduleInit = ['tool','tablePlus'];
+	function gouguInit() {
+		var table = layui.tablePlus, tool = layui.tool, tree = layui.tree, form = layui.form;
+
+		//同时拉取部门树和全部在职员工，把员工挂到对应部门节点下
+		$.when(
+			$.get("/api/index/get_department_tree"),
+			$.get("/api/index/get_employee")
+		).done(function(resDept, resEmp){
+			var trees = (resDept[0] && resDept[0].trees) || [];
+			var emps = (resEmp[0] && resEmp[0].data) || [];
+
+			//按主部门分组
+			var map = {};
+			$.each(emps, function(i, e){
+				var did = e.did || 0;
+				(map[did] = map[did] || []).push(e);
+			});
+
+			var used = {};
+			function attach(nodes){
+				$.each(nodes, function(i, n){
+					var kids = map[n.id] || [];
+					var persons = [];
+					$.each(kids, function(j, e){
+						used[e.id] = 1;
+						persons.push({
+							id: 'u' + e.id,
+							uname: e.name,
+							title: e.name + '<span class="pos-tag">' + (e.position || '未设置职位') + '</span>'
+						});
+					});
+					n.title = n.title + '<span class="dept-count">' + persons.length + '人</span>';
+					n.children = persons.concat(n.children || []);
+					if(n.children && n.children.length){ attach(n.children); }
+				});
+			}
+			attach(trees);
+
+			//未分配主部门的员工，收进“未分配”节点
+			var rest = [];
+			$.each(emps, function(i, e){
+				if(!used[e.id]){
+					rest.push({
+						id: 'u' + e.id,
+						uname: e.name,
+						title: e.name + '<span class="pos-tag">' + (e.position || '未设置职位') + '</span>'
+					});
+				}
+			});
+			if(rest.length > 0){
+				trees.push({id: 'none', title: '未分配<span class="dept-count">' + rest.length + '人</span>', spread: true, children: rest});
+			}
+
+			tree.render({
+				elem: '#depament',
+				data: trees,
+				onlyIconControl: false,
+				click: function(obj){
+					$('#depament').find('.layui-tree-set').removeClass('active');
+					$(obj.elem).addClass('active');
+					var nid = String(obj.data.id);
+					if(nid.charAt(0) == 'u'){
+						//点击人名：按姓名过滤右侧表格
+						var uname = obj.data.uname || '';
+						$('[name="keywords"]').val(uname);
+						layui.pageTable.reload({ where: {did: '', keywords: uname}, page:{curr:1} });
+					}else if(nid == 'none'){
+						layui.pageTable.reload({ where: {did: 'none', keywords: ''}, page:{curr:1} });
+					}else{
+						//点击部门：按部门过滤
+						$('[name="keywords"]').val('');
+						layui.pageTable.reload({ where: {did: obj.data.id, keywords: ''}, page:{curr:1} });
+					}
+					layui.form.render('select');
+				}
+			});
+		});
+
+		layui.pageTable = table.render({
+			elem: '#test',
+			title: '通讯录',
+			url: "/home/index/contacts_book", //数据接口
+			height: 'full-114',
+			cols: [
+				[{
+						field: 'thumb',
+						title: '头像',
+						toolbar: '#thumb',
+						align: 'center',
+						width: 60
+					}, {
+						field: 'name',
+						title: '用户姓名',
+						align: 'center',
+						width: 80
+					},{
+						field: 'mobile',
+						title: '手机号码',
+						align: 'center',
+						width: 120
+					},{
+						field: 'email',
+						title: '电子邮箱'
+					},{
+						field: 'sex',
+						title: '性别',
+						align: 'center',
+						width: 60,
+						templet: function (d) {
+							var html = '未知';
+							if(d.sex == 1){
+								html = '男'
+							}
+							else if(d.sex == 2){
+								html = '女'
+							}
+							return html;
+						}
+					},{
+						field: 'department',
+						title: '所在部门',
+						width: 120
+					},{
+						field: 'departments',
+						title: '次要部门',
+						width: 200
+					}, {
+						field: 'position',
+						title: '岗位职称',
+						align: 'center',
+						width: 100
+					}, {
+						field: 'entry_time',
+						title: '入职日期',
+						align: 'center',
+						width: 100
+					}
+				]
+			]
+		});
+	}
+</script>
+{/block}
+<!-- /脚本 -->

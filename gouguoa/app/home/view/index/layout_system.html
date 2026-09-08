@@ -1,0 +1,41 @@
+<div class="layui-row layui-col-space16">
+	<div class="layui-col-md12">
+		<div class="layui-card">
+			<div class="layui-card-title">系统信息</div>
+			<div class="layui-card-body">
+				<table class="layui-table" lay-skin="" lay-size="sm">
+					{if condition="($install == true)"}
+					<tr>
+						<td colspan="4" style="color: #E94335; background-color:#f8f8f8">提醒：发现app目录下的install文件夹没删除，为了系统的安全,请手动去删除。</td>
+					</tr>
+					{/if}
+					<tr>
+						<td class="info-td">平台名称</td>
+						<td colspan="3">{:get_system_config('web','admin_title')}</td>
+					</tr>
+					<tr>
+						<td class="info-td">服务器系统</td>
+						<td>{:get_system_info('os')}</td>
+						<td class="info-td">PHP版本</td>
+						<td>{:get_system_info('php')}</td>
+					</tr>
+					<tr>
+						<td class="info-td">上传附件限制</td>
+						<td>{:get_system_config('system','upload_max_filesize')}M / {:get_system_info('upload_max_filesize')}</td>
+						<td class="info-td">执行时间限制</td>
+						<td>{:get_system_info('max_execution_time')}</td>
+					</tr>
+					<tr>
+						<td class="info-td">框架版本</td>
+						<td colspan="3">ThinkPHP {$TP_VERSION} · Layui {:LAYUI_VERSION}</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+<script>
+function layoutSystem(){
+
+}
+</script>

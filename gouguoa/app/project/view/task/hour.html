@@ -1,0 +1,202 @@
+{extend name="../../base/view/common/base" /}
+{block name="style"}
+<style>
+.layui-unselect dl {max-height:188px;}
+.tab-1 .user-name,.tab-2 .user-name,.tab-3 .user-name,.tab-4 .user-name{display:none;}
+</style>
+{/block}
+<!-- 主体 -->
+{block name="body"}
+<div class="p-page">
+	<div class="layui-card border-x border-t" style="margin-bottom:0; box-shadow:0 0 0 0 rgb(5 32 96 / 0%)">
+		<div class="layui-tabs layui-tab-brief" id="tab">
+			<ul class="layui-tabs-header">
+				<li class="layui-this">工时列表</li>
+				<li>我的工时</li>
+				{eq name="$leader" value="1"}
+				<li>下属的工时(部门负责人)</li>
+				{/eq}
+			</ul>
+		</div>
+	</div>
+	<form class="layui-form gg-form-bar border-x tab-0" id="barsearchform" lay-filter="barsearchform">
+		<div class="layui-input-inline" style="width:180px;">
+			<input type="text" class="layui-input" id="range_time" placeholder="选择时间区间" readonly name="range_time">
+		</div>
+		<div class="layui-input-inline user-name" style="width:100px;">
+			<input type="text" name="username"  placeholder="请选择员工" class="layui-input picker-admin" readonly />
+			<input type="text" name="uid" value="" style="display:none" />	
+		</div>
+		<div class="layui-input-inline" style="width:300px;">
+			<input type="text" name="keywords"  placeholder="关键字，输入工作内容" class="layui-input"/>
+		</div>	
+		<div class="layui-input-inline" style="width:150px;">
+			<button class="layui-btn layui-btn-normal" lay-submit="" lay-filter="table-search"><i class="layui-icon layui-icon-search mr-1"></i>搜索</button>
+			<button type="reset" class="layui-btn layui-btn-reset" lay-filter="table-reset">清空</button>
+		</div>
+	</form> 
+	<div>
+		<table class="layui-hide" id="test" lay-filter="test"></table>
+	</div>
+</div>
+<script type="text/html" id="toolbarDemo">
+<h3>任务工时</h3>
+</script>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+	<script>
+	const is_leader = '{$leader}';
+	const role_auth = '{$role_auth}';
+	const hour_auth = '{$hour_auth}';
+	const moduleInit = ['tool','tablePlus','oaPicker','oaSchedule','laydatePlus'];
+	function gouguInit() {
+		var form = layui.form, tabs = layui.tabs,table = layui.tablePlus,tool=layui.tool, work = layui.oaSchedule,laydatePlus = layui.laydatePlus,laydate = layui.laydate;
+		//tabs切换
+		tabs.on('afterChange(tab)', function(data) {
+		    $('[name="tab"]').val(data.index);
+			$("#barsearchform")[0].reset();
+			$("#barsearchform").attr('class','layui-form gg-form-bar border-x tab-'+data.index);
+			let searchObject = form.val('barsearchform');
+			layui.scheduleTable.reload({where:searchObject,page:{curr:1}});
+			return false;
+		})
+		
+		var diff_time = new laydatePlus({'target':'range_time'});
+		
+		layui.scheduleTable = table.render({
+			elem: '#test'
+			,toolbar: '#toolbarDemo'
+			,title:'工时列表'
+			,url: "/project/task/hour"
+			,cellMinWidth: 80
+			,is_excel:true
+			,height: 'full-155'
+			,cols: [[ //表头
+				{field: 'id', title: '序号',fixed: 'left', width:80, align:'center'}
+				,{field: 'labor_type_string', title: '工作类型', align:'center',width:90,templet:function(d){
+					var html='';
+					if(d.labor_type==0){
+						html='<span class="layui-color-'+d.labor_type+'">-</span>';
+					}
+					else if(d.labor_type == 1){
+						html='<span class="layui-color-'+d.labor_type+'">案头工作</span>';
+					}
+					else if(d.labor_type == 2){
+						html='<span class="layui-color-'+d.labor_type+'">外勤工作</span>';
+					}
+					return html;
+				}}
+				,{field: 'work_cate', title: '工作类别', align:'center',width:80}
+				,{field: 'start_time', title: '工作时间范围', align:'center',width:186,templet:function(d){
+					var html=d.start_time+' 至 '+d.end_time_b;
+					return html;
+				}}
+				,{field: 'name', title: '执行人', align:'center',width:80}
+				,{field: 'labor_time', title: '工时', align:'center',width:80}
+				,{field: 'title', title: '工作内容'}
+				,{field: 'task', title: '关联任务', width:200}
+				,{field: 'project', title: '关联项目', width:180}
+				,{field: 'create_time', title: '记录时间', align:'center',width:150}
+				,{field: 'right', title: '操作',fixed:'right', width:180, align:'center',templet:function(d){
+					var html='<div class="layui-btn-group">';
+					if(hour_auth==2 && d.admin_id==login_admin){
+						//开放员工自己调整
+						html+='<button class="layui-btn layui-btn-xs layui-bg-orange" lay-event="time">调整工时</button>';
+						html+='<button class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</button>';
+					}
+					if(hour_auth==3 && is_leader > 0){
+						//开放部门负责人调整
+						html+='<button class="layui-btn layui-btn-xs layui-bg-orange" lay-event="time">调整工时</button>';
+						html+='<button class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</button>';
+					}
+					if(hour_auth==4 && role_auth > 0){
+						//开放日常办公数据管理员调整
+						html+='<button class="layui-btn layui-btn-xs layui-bg-orange" lay-event="time">调整工时</button>';
+						html+='<button class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</button>';
+					}
+					if(d.admin_id==login_admin){
+						html+='<button class="layui-btn layui-btn-xs" lay-event="edit">编辑</button>';
+					}
+					html+='<button class="layui-btn layui-btn-xs layui-btn-normal" lay-event="view">查看</button>';
+					html+='</div>';
+					return html;
+				}}
+			]]
+		});
+		//更改工时
+		table.on('tool(test)', function(obj){
+			var data = obj.data;
+			if(obj.event === 'time'){
+			  var content='<form class="layui-form" style="width:666px">\
+							<table class="layui-table" style="margin:12px 12px 0;">\
+								<tr>\
+									<td class="layui-td-gray-2">开始时间<font>*</font></td>\
+									<td><input type="text" class="layui-input tool-time" id="start_time" name="start_time" readonly value="'+data.start_time+'" data-type="datetime" data-format="yyyy-MM-dd HH:mm" data-min="-15" data-max="0" lay-verify="required" lay-reqText="请完善开始时间"></td>\
+									<td class="layui-td-gray-2">结束时间<font>*</font></td>\
+									<td><input type="text" class="layui-input tool-time" id="end_time" name="end_time" readonly value="'+data.end_time+'" data-type="datetime" data-format="yyyy-MM-dd HH:mm" data-min="-15" data-max="0" lay-verify="required" lay-reqText="请完善开始时间"></td>\
+								</tr>\
+							</table>\
+						</form>';
+				layer.open({
+					type:1,
+					title:'调整工时',
+					area:['692px','398px'],
+					content:content,
+					success:function(){
+						form.render();					
+					},
+					btn: ['确定提交'],
+					btnAlign: 'c',
+					yes: function(idx){
+						let start_time = $('#start_time').val();
+						let end_time = $('#end_time').val();
+						if(start_time=='' || end_time==''){
+							layer.msg('请完善工作时间');
+							return;
+						}
+						$.ajax({
+							url: "/oa/api/update_schedule",
+							type:'post',
+							data:{
+								id:data.id,
+								admin_id:data.admin_id,
+								start_time:start_time,
+								end_time:end_time
+							},
+							success:function(e){
+								layer.msg(e.msg);
+								if(e.code==0){								
+									layer.close(idx);								
+									layui.scheduleTable.reload();
+								}
+							}
+						})			
+					}
+				})
+			}
+			else if(obj.event === 'edit'){
+				tool.box('/oa/schedule/add?id='+obj.data.id,"编辑工作日志",820,450,false);	
+			}
+			else if(obj.event === 'view'){
+				tool.box('/oa/schedule/view?id='+obj.data.id,"工作日志",800,398,false);					
+			}
+			else if(obj.event === 'del'){
+				tool.ask('您确定要删除该工作日志？', function (index) {
+					let callback = function (e) {
+						layer.msg(e.msg);
+						if (e.code == 0) {
+							layui.scheduleTable.reload();
+						}
+					}
+					tool.delete("/oa/schedule/del", { id: obj.data.id }, callback);
+				});
+			}
+		}); 
+	}
+		
+	</script>
+{/block}
+<!-- /脚本 -->

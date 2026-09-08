@@ -1,0 +1,428 @@
+{extend name="../../base/view/common/base" /}
+{block name="style"}
+<style>
+    ::-webkit-scrollbar { display: none; width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { border-radius: 10px; background-color: #e1e1e1;}
+	.file-folder,.file-image,.file-pdf,.file-video,.file-audio{cursor:pointer;}
+	
+	.disk-left{width:150px; float:left; height:calc(100vh - 86px); overflow-y: auto; border:1px solid #eeeeee; background-color:#fbfbfb; padding:15px;user-select: none;}
+	.disk-left::-webkit-scrollbar {width: 0;}
+	.disk-left h3{font-size:18px; height:30px; padding-left:10px; font-weight:800}
+	
+	.disk-types{padding:12px 0;}
+	.disk-types li{padding:8px; border-radius:4px; cursor:pointer;}
+	.disk-types li strong{margin-right:12px; font-size:18px;}
+	.disk-types li:hover{background-color:#F3F4F5;}
+	.disk-types li.on-this{background-color:#EDF7FD; color:#1E9FFF}
+	.disk-line{border-bottom:1px solid #eee; margin:6px 0;}
+	
+	.disk-table{margin-left:150px; overflow:hidden; height:calc(100vh - 56px);border:1px solid #eeeeee; border-left:0; background-color:#fff;}
+	.disk-table.types-1 .types-thumb,.disk-table.types-1 #list{display:none;}
+	.disk-table.types-2 .types-list,.disk-table.types-2 #thumb{display:none;}
+	
+	.disk-form{padding:10px; background-color: #fff;}
+	.disk-form .tool-add{padding:0 10px;}
+	.disk-form .iconfont{font-size:16px;}
+	.disk-form .layui-form-checkbox[lay-skin=primary]>i{border-color:#5f5f5f}
+	.disk-form .layui-form-checkbox[lay-skin=primary]{padding:0; margin:0;}
+	.disk-form .layui-form-checkbox[lay-skin=primary]>div{padding:0px; margin:0;}
+	
+	.disk-path{height:42px;padding:0 4px 0 12px;}
+	.disk-breadcrumb{float:left; padding:8px 0}
+	.disk-breadcrumb span{color:#666; margin:0 3px; font-size:10px;}
+	.disk-path .layui-tabs-header{height:42px;}
+	.disk-path .layui-tabs-header li{padding:0 10px;line-height:42px; font-size:13px;}
+	
+    /** 缩略图模式 **/
+    .file-thumb {height:calc(100vh - 206px); overflow-y: auto;}
+    .file-thumb .file-subject { flex: 1; overflow: hidden; overflow-y: auto; margin: 10px; box-sizing: border-box; }
+    .file-thumb .file-subject:hover::-webkit-scrollbar { display: block; }
+    .file-thumb .file-subject ul { display: flex; flex-wrap: wrap; }
+    .file-thumb .file-subject ul li {position: relative; height: 160px; margin:11px; padding: 10px; border-radius: 4px; border:2px solid #ffffff;}
+    .file-thumb .file-subject ul li:hover {border: 2px solid #f8f8f8; background-color:#F2F2F2;}
+    .file-thumb .file-subject ul li.on {border: 2px solid #1e9fff; background-color:#E5F2FF}
+    .file-thumb .file-subject ul li img {width: 86px; height: 86px; border-radius: 6px; padding:16px; border:1px solid rgba(0, 0, 0, 0.05); background-color:#fff;}
+    .file-thumb .file-subject ul li img.file-image { width: 106px; height: 106px; padding:6px;}
+    .file-thumb .file-subject ul li video { width: 60px; height: 60px; border-radius: 3px; }
+    .file-thumb .file-subject ul li p {margin: 5px 0 0; width: 118px; font-size: 13px; text-align: center; word-break: break-all; text-overflow: ellipsis; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;}
+	.file-thumb .file-subject ul li .layui-btn-ctrl{position:absolute; top:1px; right:1px; opacity: 0;}
+	.file-thumb .file-subject ul li:hover .layui-btn-ctrl{opacity: 1;}
+	.file-thumb .file-subject ul li .has-star{position: absolute; width:20px; height:20px; right: 1px; top: 80px; border-radius:50%; text-align: center; line-height: 20px; color: #ffffff; background-color:#ffb800; border:1px solid #fff; padding:2px;}
+	.file-thumb .file-subject ul li .has-share{position: absolute; width:20px; height:20px; right: 1px; top: 108px; border-radius:50%; text-align: center; line-height: 20px; color: #ffffff; background-color:#ff5722; border:1px solid #fff; padding:2px;}
+	
+    .file-footer {display: flex; align-items: center; padding: 5px 15px 0; height: 45px; border-top: 1px solid #f2f2f2; text-align: center; background: #ffffff;}
+    .empty{ display: flex; flex: 1; align-items: center; flex-direction: column; justify-content: center; overflow: hidden; text-align: center; color: #cccccc;}
+    .empty p{width: 180px; text-align: center;}
+    .empty i{font-size: 180px;}
+	.file-item{cursor:pointer;white-space: nowrap;}
+
+</style>
+{/block}
+<!-- 主体 -->
+{block name="body"}
+<div class="p-page">
+	<div class="disk-left">
+		<h3>个人空间</h3>
+		<div class="disk-types">
+			<ul>
+				<li data-tab="my"><a href="/disk/index/datalist"><strong class="iconfont icon-contact" style="color:#1e9fff"></strong>我的文件</a></li>
+				<li data-tab="star"><a href="/disk/index/starlist"><strong class="iconfont icon-shoucang" style="color:#ffb800"></strong>标星文件</a></li>
+				<li data-tab="myshare"><a href="/disk/index/mysharelist"><strong class="iconfont icon-daochu" style="color:#16b777"></strong>我分享的</a></li>
+				<li data-tab="share" class="on-this"><a href="/disk/index/tosharelist"><strong class="iconfont icon-daoru" style="color:#ff5722"></strong>别人分享的</a></li>
+			</ul>
+		</div>
+	</div>
+	<div id="diskBox" class="disk-table types-2">
+		<form class="layui-form disk-form border-b" lay-filter="barsearchform">
+			<div class="layui-input-inline" style="width:268px">
+				<input type="text" name="keywords" placeholder="输入关键字，文件名称/目录名称" class="layui-input" autocomplete="off" />
+			</div>
+			<div class="layui-input-inline" style="width:142px">
+				<input type="hidden" name="pid" value="0" />
+				<input type="hidden" name="ext" value="" />
+				<input type="hidden" name="limit" value="30" />
+				<button class="layui-btn layui-btn-normal" lay-submit="" lay-filter="webform"><i class="layui-icon layui-icon-search mr-1"></i>搜索</button>
+				<button type="reset" class="layui-btn layui-btn-reset" style="margin-left:3px;">清空</button>
+			</div>
+			<div class="layui-input-inline" style="width:40px; float:right; padding-top:3px;">
+				<span class="layui-btn layui-btn-sm layui-btn-primary tool-tips show-types types-thumb" style="margin:0" data-tips="缩略图模式" data-types="1"><i class="iconfont icon-charutupian"></i></span>
+				<span class="layui-btn layui-btn-sm layui-btn-primary tool-tips show-types types-list" style="margin:0" data-tips="列表模式" data-types="2"><i class="iconfont icon-liebiao"></i></span>
+			</div>
+		</form>
+		<div class="disk-path layui-form border-b">
+			<div class="disk-breadcrumb" id="diskPath"><i class="layui-icon layui-icon-windows"></i> <a href="javascript:void(0);" data-id="0">别人分享的文件</a></div>
+			<div class="layui-input-inline" style="width:482px; float:right;">
+				<div class="layui-tabs layui-tab-brief" id="tab">
+					<ul class="layui-tabs-header">
+						<li class="layui-this" lay-id="">全部</li>
+						<li lay-id="image">图片</li>
+						<li lay-id="video">视频</li>
+						<li lay-id="audio">音频</li>
+						<li lay-id="pdf">PDF</li>
+						<li lay-id="office">办公文档</li>
+						<li lay-id="online">在线文档</li>
+						<li lay-id="zip">压缩包</li>
+						<li lay-id="other">其他</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div id="thumb">
+			<!-- 主体 -->
+			<div class="file-thumb">
+				<div class="file-subject">
+					<ul id="filesBox"></ul>
+				</div>
+			</div>
+			<!-- 页脚 -->
+			<div class="file-footer">
+				<div id="laypage"></div>
+			</div>
+		</div>
+		
+		<div id="list">
+			<table class="layui-hide" id="table_list" lay-filter="table_list"></table>
+		</div>
+    </div>
+</div>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+<script>
+	const typeExt = ['all','image','video','audio','pdf','office','article','zip','other'];
+	const fileExt={
+		all:[],
+		image:['jpg','jpeg','png','gif'],
+		video:['mpg','mp4','mpeg','avi','wmv','mov','flv','m4v'],
+		audio:['mp3','wav','wma','flac','midi'],
+		pdf:['txt','pdf'],
+		office:['doc','docx','xls','xlsx','ppt','pptx'],
+		article:['article'],
+		zip:['zip','rar','7z','gz','tar'],
+		other:['other']
+	};
+	
+	function fileDo(item){
+		let type = '0',ext="zip",is_star='',is_share='';
+		// 判断元素是否在数组中
+		let path='/static/home/images/icon/file.png';
+		if (fileExt.image.includes(item.file_ext)) {
+			path=item.thumbpath;
+			type = '0,1';
+			ext="image";
+		}
+		if (fileExt.office.includes(item.file_ext)) {
+			type = '0,1';
+			ext="office";
+			path='/static/home/images/icon/'+item.file_ext+'.png';
+		}
+		if (fileExt.pdf.includes(item.file_ext)) {
+			type = '0,1';
+			ext="pdf";
+			path='/static/home/images/icon/'+item.file_ext+'.png';
+		}								
+		if (fileExt.video.includes(item.file_ext)) {
+			type = '0,1';
+			ext="video";
+			path='/static/home/images/icon/video.png';
+		}
+		if (fileExt.audio.includes(item.file_ext)) {
+			type = '0,1';
+			ext="audio";
+			path='/static/home/images/icon/audio.png';
+		}
+		if (fileExt.zip.includes(item.file_ext)) {
+			type = '0';
+			ext="zip";
+			path='/static/home/images/icon/rar.png';
+		}
+		if(fileExt.article.includes(item.file_ext)){
+			type = '1';
+			ext="article";
+			path='/static/home/images/icon/article.png';
+		}
+		if(item.file_ext == 'folder'){
+			type = '1';
+			ext="folder";
+			path='/static/home/images/icon/folder.png';
+		}
+		return {type:type,path:path,ext:ext,is_star:is_star,is_share:is_share};
+	}
+	
+	//默认是列表模式
+	var types=2;
+	const moduleInit = ['tool','uploadPlus','tablePlus'];
+	function gouguInit() {
+		var tool = layui.tool,uploadPlus = layui.uploadPlus,table = layui.tablePlus,form = layui.form,laypage = layui.laypage,tabs = layui.tabs;
+		//选择文件类型
+		tabs.on('afterChange(tab)', function(data){
+			if(data.index==0){
+				$('[name="ext"]').val('');
+			}
+			else{
+				let ext = typeExt[data.index];
+				$('[name="ext"]').val(fileExt[ext]);
+			}
+			$('[lay-filter="webform"]').click();
+			return false;
+		});
+		
+		$('#diskBox').on('click','.show-types',function(){
+			types=$(this).data('types');
+			$('#diskBox').attr('class','disk-table types-'+types);
+			if(types==1){
+				$('[lay-filter="all"]').removeAttr('disabled').prop('checked', false);
+			}
+			else{
+				$('[lay-filter="all"]').attr('disabled',true).prop('checked', false);
+			}
+			form.render();
+			$('[lay-filter="webform"]').click();
+		})
+		
+		let ctrl_callback = function (e) {
+			if(e.code == 0){
+				layer.closeAll();
+				layer.msg(e.msg);
+				$('[lay-filter="webform"]').click();
+			}
+			else{
+				layer.msg(e.msg);
+			}
+		}
+		
+		//查看文件
+		$('#filesBox,#list').on('click','.file-item',function(){
+			let id = $(this).parent().data('id');
+			let href = $(this).data('href');
+			let ext = $(this).data('ext');
+			if(ext == 'video'){
+				tool.videoView(href);
+			}
+			else if(ext == 'audio'){
+				tool.audioView(href);
+			}
+			else if(ext == 'image'){
+				tool.photoView(href);
+			}
+			else if(ext == 'pdf'){
+				tool.pdfView(href);
+			}
+			else if(ext == 'article'){
+				tool.articleView(id);
+			}
+			else if(ext == 'folder'){
+				$('[name="pid"]').val(id);
+				$('[lay-filter="webform"]').click();
+			}
+			else{
+				return false;
+			}
+		})
+		
+		//加载数据
+		var data = form.val('barsearchform');
+		if(types==1){
+			get_files(data);
+		}
+		
+		form.on('submit(webform)', function (data) {
+			if(types==1){
+				get_files(data.field);
+			}
+			else{
+				layui.fileTable.reload({
+					where: data.field,
+					page: {curr: 1}
+				});
+			}
+			return false;
+		});
+		
+		$('.layui-btn-reset').click(function(){
+			setTimeout(function(){
+				$('[lay-filter="webform"]').click();
+			},200)
+		})
+		
+		//thumb数据加载
+		function get_files(param){
+			var loadIndex = layer.load(0);
+			$.ajax({
+				url:"/disk/index/tosharelist",
+				data:param,
+				complete:function(){
+					layer.close(loadIndex)
+				},
+				success:function(res){
+					$('[name="select_all"]').prop('checked', false);
+					form.render('checkbox');
+					if(res.code==0){
+						laypage.render({
+							elem: 'laypage',
+							limit:param['limit'],
+							curr:param['page'],
+							count: res.count, // 数据总数
+							jump: function(obj, first){
+								//console.log(obj.curr); // 得到当前页，以便向服务端请求对应页的数据。
+								//console.log(obj.limit); // 得到每页显示的条数
+								// 首次不执行
+								if(!first){
+									var data = form.val('barsearchform');
+									data['page'] = obj.curr;
+									get_files(data);
+								}
+							}
+						});					
+						var item=res.data,li='';
+						if(item.length>0){
+							for(var a=0;a<item.length;a++){								
+								let fileitem = fileDo(item[a]);
+								ctrl = '<span class="layui-btn layui-btn-xs layui-btn-normal file-ctrl" data-ctrl="disk" data-fileid="'+item[a].id+'" data-actionid="'+item[a].action_id+'" data-href="'+item[a].filepath+'" data-filename="'+item[a].name+'" data-ext="'+fileitem.ext+'" data-type="'+fileitem.type+'">操作</span>';
+								
+								li+='<li data-id="'+item[a].id+'" data-title="'+item[a].name+'" data-ext="'+item[a].file_ext+'" data-types="'+item[a].types+'"><img src="'+fileitem.path+'" alt="'+item[a].name+'" style="object-fit: contain;" class="file-item file-'+fileitem.ext+'" data-href="'+item[a].filepath+'" data-ext="'+fileitem.ext+'"><p title="'+item[a].name+'">'+item[a].name+'</p>\
+									<div class="layui-btn-ctrl">'+ctrl+'\
+									<span class="name-edit" style="display:none;" id="fileEdit'+item[a].id+'" title="重命名"></span>\
+									<span class="file-delete" style="display:none;" id="fileDel'+item[a].id+'" title="删除"></span>\
+									<span class="file-move" style="display:none;" id="fileMove'+item[a].id+'" title="移动"></span>\
+									<span class="file-star" style="display:none;" id="fileStar'+item[a].id+'" title="标星"></span>\
+									<span class="file-starno" style="display:none;" id="fileStarno'+item[a].id+'" title="取消标星"></span>\
+									<span class="file-share" style="display:none;" id="fileShare'+item[a].id+'" title="分享"></span>\
+									<span class="file-shareno" style="display:none;" id="fileShareno'+item[a].id+'" title="取消分享"></span>\
+									</div>\
+									<div class="file-check"><i class="layui-icon layui-icon-ok" style="font-size: 16px; color: #eeeeee;"></i></div>'+fileitem.is_star+fileitem.is_share+'</li>';
+							}
+							$('#filesBox').html(li);
+							$('#laypage').show();
+						}
+						else{
+							$('#filesBox').html('<div class="empty"><i class="layui-icon layui-icon-upload"></i><p>无文件文件，赶紧去上传吧!</p></div>');
+							$('#laypage').hide();
+						}
+					}	
+				}				
+			});
+		}
+		let share_types=['','所有人','部门','岗位','员工'];
+		//列表数据加载
+		layui.fileTable = table.render({
+			elem: "#table_list"
+			,toolbar: false
+			,url: "/disk/index/tosharelist"
+			,page: true
+			,limit: 30
+			,where:data
+			,cellMinWidth: 80
+			,height: 'full-155'
+			,lineStyle: 'height: 54px;'
+			,skin:'line'
+			,size:'lg'
+			,cols: [[
+				{field:'name',title: '文件名',minWidth:300,templet:function(d){
+					if(d.delay>0){
+						let fileitem = fileDo(d);
+						return '<div data-id="'+d.id+'"><div class="file-item file-item-'+fileitem.ext+'" data-href="'+d.filepath+'" data-ext="'+fileitem.ext+'"><div style="float:left; width:32px; height:32px; margin-right:10px; margin-top:3px; margin-left:3px;"><img src="'+fileitem.path+'" style="width:100%; height:100%; vertical-align:top;object-fit: cover;" /></div><span>'+d.name+'</span></div></div>';
+					}
+					else{
+						return '<div data-id="'+d.id+'"><div class="file-item"><div style="float:left; width:32px; height:32px; margin-right:10px; margin-top:3px; margin-left:3px;"><img src="/static/home/images/icon/file.png" style="width:100%; height:100%; vertical-align:top;object-fit: cover;" /></div><span>'+d.name+'</span></div></div>';
+					}
+				}}
+				,{field:'file_size',title: '文件大小',align: 'center',width: 120,templet:function(d){
+					if(d.file_size>0){
+						return tool.renderSize(d.file_size);
+					}else{
+						return '-';
+					}
+				}}
+				,{field:'share_types',title: '分享对象',width:100,align:'center',templet:function(d){
+					return share_types[d.share_types];
+				}}
+				,{field:'share_time',title: '分享截止时间',width:150,align:'center',templet:function(d){
+					if(d.delay>0){
+						return '<span class="green">'+d.share_time+'</span>';
+					}
+					else{
+						return '<span class="red">'+d.share_time+'[已到期]</span>';
+					}
+				}}
+				,{field:'admin_name',title: '创建人',width:100,align:'center'}
+				,{field:'create_time', title: '创建时间',width:150,align:'center'}
+				,{width:100,fixed:'right',title: '操作', align:'center',ignoreExport:true,templet: function(d){
+					if(d.delay>0){
+						let fileitem = fileDo(d);
+						var ctrl = '<div data-id="'+d.id+'" data-title="'+d.name+'" data-ext="'+d.file_ext+'" data-types="'+d.types+'"><span class="layui-btn layui-btn-xs layui-btn-normal file-ctrl" data-ctrl="disk" data-fileid="'+d.id+'" data-actionid="'+d.action_id+'" data-href="'+d.filepath+'" data-filename="'+d.name+'" data-ext="'+fileitem.ext+'" data-type="'+fileitem.type+'">\
+						操作 <i class="layui-icon layui-icon-down"></i></span>\
+						<div style="display:none">\
+							<span class="name-edit" id="fileEdit'+d.id+'" title="重命名"></span>\
+							<span class="file-delete" id="fileDel'+d.id+'" title="删除"></span>\
+							<span class="file-move" id="fileMove'+d.id+'" title="移动"></span>\
+							<span class="file-star" id="fileStar'+d.id+'" title="标星"></span>\
+							<span class="file-starno" id="fileStarno'+d.id+'" title="取消标星"></span>\
+							<span class="file-share" id="fileShare'+d.id+'" title="分享"></span>\
+							<span class="file-shareno" id="fileShareno'+d.id+'" title="取消分享"></span>\
+						</div></div>';
+						return ctrl;
+					}
+					else{
+						return '-';
+					}
+				}}
+			]]
+		});
+			
+		table.on('tool(table_list)',function (obj) {
+			var checkStatus = table.checkStatus(obj.config.id); //获取选中行状态
+			var data = obj.data;
+			let callback = function (e) {
+				layer.msg(e.msg);
+				if(e.code==0){
+					layui.fileTable.reload();
+				}
+			}
+		});
+	}
+</script>
+{/block}
+<!-- /脚本 -->

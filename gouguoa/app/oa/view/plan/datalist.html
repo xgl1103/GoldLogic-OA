@@ -1,0 +1,141 @@
+{extend name="../../base/view/common/base" /}
+{block name="style"}
+<style>
+.layui-unselect dl {max-height:188px;}
+</style>
+{/block}
+<!-- 主体 -->
+{block name="body"}
+<div class="p-page">
+	<div class="layui-card border-x border-t" style="margin-bottom:0; box-shadow:0 0 0 0 rgb(5 32 96 / 0%)">
+		<div class="layui-tabs layui-tab-brief" id="tab">
+			<ul class="layui-tabs-header">
+				<li><a href="/oa/plan/calendar">我的日程</a></li>
+				<li {eq name="$tab" value="0"} class="layui-this" {/eq}><a href="/oa/plan/datalist">我的日程查询</a></li>
+				{eq name="$auth" value="1"}
+				<li {eq name="$tab" value="1"} class="layui-this" {/eq}><a href="/oa/plan/datalist?tab=1">全部日程查询(管理员)</a></li>
+				{/eq}
+			</ul>
+		</div>
+	</div>
+	<form class="layui-form gg-form-bar border-x border-t" lay-filter="barsearchform">
+			<div class="layui-input-inline" style="width:150px;">
+			<select name="type">
+				<option value="">选择优先级</option>
+				<option value="1">普通</option>
+				<option value="2">重要/紧急</option>
+				<option value="3">重要/不紧急</option>
+				<option value="4">不重要/紧急</option>
+				<option value="5">不重要/不紧急</option>
+			</select>
+		</div>
+		<div class="layui-input-inline" style="width:180px">
+			<input type="text"  name="diff_time" class="layui-input tool-time" data-range="~" placeholder="选择时间区间" readonly>
+		</div>
+		{eq name="$tab" value="1"}
+		<div class="layui-input-inline" style="width:120px;">
+			<input type="text" placeholder="请选择员工" class="layui-input picker-admin" readonly />
+			<input type="text" name="uid" value="" style="display:none" />	
+		</div>
+		{/eq}
+		<div class="layui-input-inline" style="width:240px;">
+			<input type="text" name="keywords"  placeholder="输入关键字，日程安排内容" class="layui-input"/>
+		</div>	
+		<div class="layui-input-inline" style="width:150px;">
+			<input type="text" name="tab" value="{$tab}" style="display:none" />
+			<button class="layui-btn layui-btn-normal" lay-submit="" lay-filter="table-search"><i class="layui-icon layui-icon-search mr-1"></i>搜索</button>
+			<button type="reset" class="layui-btn layui-btn-reset" lay-filter="table-reset">清空</button>
+		</div>
+	</form> 
+	<div>
+		<table class="layui-hide" id="test" lay-filter="test"></table>
+	</div>
+</div>
+<script type="text/html" id="toolbarDemo">
+  <div class="layui-btn-container">
+  	<button class="layui-btn layui-btn-sm addLoan" type="button">+ 新增日程安排</button>
+  </div>
+</script>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+	<script>
+	const tab = {$tab};
+	const moduleInit = ['tool','tablePlus','oaPicker'];
+	function gouguInit() {
+		var form = layui.form,table = layui.tablePlus,tool=layui.tool,dropdown = layui.dropdown,laydate = layui.laydate;  
+
+		layui.pageTable = table.render({
+			elem: '#test'
+			,toolbar: '#toolbarDemo'
+			,title:'日程安排列表'
+			,url: "/oa/plan/datalist"
+			,where:{tab:tab}
+			,cellMinWidth: 80
+			,height: 'full-155'
+			,cols: [[ //表头
+				{field: 'id', title: '序号',fixed: 'left', width:80, align:'center'}
+				,{field: 'type_str', title: '事件级别', align:'center',width:132,templet: function(d){
+						var html = '<span class="check-status-color-'+d.type+'">『'+d.type_str+'』</span>';
+						return html;
+					}
+				}
+				,{field: 'start_time', title: '日程时间范围', align:'center',width:260,templet:function(d){
+					var html=d.start_time+' 至 '+d.end_time;
+					return html;
+				}}
+				,{field: 'title', title: '日程安排内容',minWidth:240}
+				,{field: 'admin_name', title: '所属人', align:'center',width:80}
+				,{field: 'unames', title: '参与人', width:136}
+				,{field: 'remind_time', title: '提醒时间', align:'center',width:136}
+				,{field: 'right', title: '操作',fixed:'right', width:120, align:'center',templet:function(d){
+					var html='<div class="layui-btn-group">';
+					html+='<button class="layui-btn layui-btn-xs layui-btn-normal" lay-event="view">查看</button>';
+					if(d.admin_id==login_admin){
+						html+='<button class="layui-btn layui-btn-xs" lay-event="edit">编辑</button>';
+						html+='<button class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</button>';
+					}
+					html+='</div>';
+					return html;
+				}}
+			]]
+		});
+
+		//操作
+		table.on('tool(test)', function(obj){
+			var data = obj.data;
+			if(obj.event === 'edit'){
+				tool.box('/oa/plan/add?id='+data.id,"编辑日程安排",810,560,false);
+				return;				
+			}
+			else if(obj.event === 'view'){
+				tool.box('/oa/plan/view?id='+data.id,"日程安排", 800,360,false);
+				return;				
+			}
+			else if(obj.event === 'del'){
+				layer.confirm('您确定要删除该日程', {
+					icon: 3,
+					title: '提示'
+				}, function (index) {
+					let callback = function (e) {
+						layer.msg(e.msg);
+						if (e.code == 0) {
+							layui.pageTable.reload();
+						}
+					}
+					tool.delete("/oa/plan/del", { id:data.id }, callback);
+					layer.close(index);
+				});
+				return;				
+			}
+		});
+		  
+		$('body').on('click','.addLoan',function(){
+			tool.box('/oa/plan/add',"新增日程安排",810,560,maxmin=false);		
+		});	  
+	}		
+	</script>
+{/block}
+<!-- /脚本 -->

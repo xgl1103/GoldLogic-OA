@@ -1,0 +1,184 @@
+{extend name="../../base/view/common/base" /}
+{block name="style"}
+<link rel="stylesheet" href="{__GOUGU__}/third_party/fullcalendar/main.min.css"/>
+<style>
+#calendar {width: 100%;margin: 0 auto; background-color:#fff;
+-moz-user-select: none; /*火狐*/
+-webkit-user-select: none; /*webkit浏览器*/
+}
+.fc .fc-toolbar.fc-header-toolbar{margin-bottom:0;border:1px solid #eeeeee; border-bottom:none;padding:15px 12px;}
+.fc-col-header{background-color:#fafafa;}
+.fc .fc-button-primary {color: #fff; background-color: #1E9FFF; border-color: #1E9FFF;}
+.fc .fc-button-primary:not(:disabled).fc-button-active, .fc .fc-button-primary:not(:disabled):active { color: #fff; background-color: #FBBC05; border-color: #FBBC05;}
+.fc .fc-button-primary:focus, .fc .fc-button-primary:not(:disabled).fc-button-active:focus, .fc .fc-button-primary:not(:disabled):active:focus {box-shadow: 0 0 0 0;}
+.fc .fc-button-primary:hover{color:#fff; background-color:#52B5FF; border-color:#52B5FF;}
+.fc-daygrid-event-harness{cursor:pointer;}
+.fc .fc-daygrid-week-number{font-size:12px;}
+.fc-daygrid-block-event .fc-event-time{font-weight:800}
+.fc-h-event .fc-event-main{color:#111111}
+.fc-theme-standard .fc-scrollgrid,.fc-theme-standard td, .fc-theme-standard th{border-color:#eee;}
+/*今天背景色和字体颜色 */
+.fc .fc-daygrid-day.fc-day-today .fc-event-title,.fc .fc-daygrid-day.fc-day-today .fc-event-time,.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number{font-weight:800;color:#FF5722;}
+.calendar-select{width:100px; height:40px; position:absolute; top:31px; right:262px; z-index:100;}
+.calendar-select .layui-input{height: 36px; line-height: 1.2;}
+.layui-tags-span {padding: 3px 6px;font-size: 12px; background-color:#fff; border-radius: 3px; margin:2px 0; margin-right: 5px; border: 1px solid #e6e6e6; display: inline-block;}
+.layui-layer-content .layui-table-view .layui-table td,.layui-layer-content .layui-table-view .layui-table th{padding:1px 0;}
+.layui-unselect dl {max-height:188px;}
+</style>
+{/block}
+<!-- 主体 -->
+{block name="body"}
+<script src="{__GOUGU__}/third_party/fullcalendar/main.min.js"></script>
+<div class="p-page">
+	<div class="layui-card border-x border-t" style="margin-bottom:0; box-shadow:0 0 0 0 rgb(5 32 96 / 0%)">
+		<div class="layui-tabs layui-tab-brief" id="tab">
+			<ul class="layui-tabs-header">
+				<li class="layui-this"><a href="/oa/schedule/calendar">我的工作日志</a></li>
+				<li><a href="/oa/schedule/datalist?tab=0">我的工作日志查询</a></li>
+				{eq name="$is_leader" value="1"}
+				<li><a href="/oa/schedule/datalist?tab=1">下属工作日志查询</a></li>
+				{/eq}
+				{eq name="$auth" value="1"}
+				<li><a href="/oa/schedule/datalist?tab=2">全部工作日志查询(管理员)</a></li>
+				{/eq}
+			</ul>
+		</div>
+	</div>
+	<div id="calendar"></div>
+</div>
+<!-- /主体 -->
+{/block}
+<!-- 脚本 -->
+{block name="script"}
+<script type="text/javascript">
+	var uid=0;	
+	function addZero(num){
+		if(num<10){
+			num='0'+num;
+		}
+		return num;
+	}
+	const moduleInit = ['tool'];
+	function gouguInit() {
+		var form = layui.form,tool=layui.tool;		
+		//日历
+		var calendarEl = document.getElementById('calendar');
+		var calendar = new FullCalendar.Calendar(calendarEl, {
+			views: {
+				dayGrid: {
+					viewDidMount:function(arg){
+						calendar.setOption('height', window.innerHeight);
+					}
+				},
+				timeGrid: {
+					viewDidMount:function(arg){
+						calendar.setOption('height', 'auto');
+					}
+				},
+				week: {
+					viewDidMount:function(arg){
+						calendar.setOption('height', 'auto');
+					}
+				},
+				day: {
+					viewDidMount:function(arg){
+						calendar.setOption('height', 'auto');
+					}
+				}
+			},
+			//initialDate: '2020-09-12',//默认显示日期
+			initialView: 'dayGridMonth',//默认显示月视图
+			customButtons: {
+				addnew: {
+					text: '新增工作日志', click: function () {
+						tool.box('/oa/schedule/add',"新增工作日志", 820,450,false);
+					}
+				}
+            },
+			headerToolbar: {
+				left: 'prev,next',
+				center: 'title',
+				right: 'addnew dayGridMonth,timeGridWeek,listWeek'
+			},
+			height: 'auto',//自动高度
+			navLinks: true, // can click day/week names to navigate views
+			editable: false,//确定是否可以拖拉调整日历事件的时间。
+			selectable: false,//拖拉选择日期
+			selectMirror: false,//是否在用户拖动时绘制"占位符"事件。
+			dateClick: function(arg) {
+				var dateStr	= arg.date.getFullYear()+'-'+addZero(arg.date.getMonth()+1)+'-'+addZero(arg.date.getDate());
+				const dateToCheck = new Date(dateStr);
+				const currentDate = new Date();
+				const sevenDaysAgo = new Date();
+				sevenDaysAgo.setDate(currentDate.getDate() - 15);
+				if (dateToCheck < sevenDaysAgo) {
+					// 七日前的日期不可选，可以显示提示信息
+					layer.msg('不能选择15天前的日期。');
+					return false;
+				}	
+				if (dateToCheck > currentDate) {
+					// 还未到的日期不可选
+					layer.msg('只能选择前15天的日期。');
+					return false;
+				}
+				let start_time = dateStr+" 09:00";
+				tool.box('/oa/schedule/add?start_time='+start_time,"新增工作日志", 820,450,false);
+			},
+			nowIndicator: true,
+			weekNumbers: true,// 是否开启周数
+			firstDay: 1,
+			displayEventEnd: false, //所有视图显示结束时间
+			eventTimeFormat: { // like '14:30:00'
+				hour: '2-digit',
+				minute: '2-digit',
+				//second: '2-digit',
+				meridiem: false,
+				hour12: false //设置时间为24小时
+			},
+			locale: 'zh-cn',//语言
+			buttonText: {
+				//按钮文本
+				today: '今天',
+				month: '月',
+				week: '周',
+				day: '日',
+				list: '记录列表',
+			},
+			weekText: '周',
+			allDayText: '全天',
+			moreLinkText: function(n) {
+				return '另外 ' + n + ' 个'
+			},
+			noEventsText: '没有事件显示',
+			events: function(fetchInfo, successCallback, failureCallback ){
+				$.ajax({
+					type:"POST",
+					url: "/oa/schedule/calendar",
+					dataType:"json",
+					data:{start:fetchInfo.startStr,end:fetchInfo.endStr,uid:uid},
+					success:function(result){
+						//console.info(result);
+						successCallback(result);
+					},
+					error:function(){
+						failureCallback();
+					}
+				})
+			},
+			eventClick: function(info) {
+				//console.log(info.event);
+				if(info.event.id>0){
+					if(info.event.extendedProps.admin_id == login_admin){
+						tool.box('/oa/schedule/add?id='+info.event.id,"编辑工作日志",820,450,false);
+					}
+					else{
+						tool.box('/oa/schedule/view?id='+info.event.id,"工作日志",800,398,false);
+					}
+				}
+			}
+		});
+		calendar.render();
+	}
+	</script>
+{/block}
+<!-- /脚本 -->

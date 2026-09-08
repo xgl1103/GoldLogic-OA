@@ -1,0 +1,164 @@
+{extend name="../../base/view/common/base" /}
+<!-- 主体 -->
+{block name="body"}
+<div class="p-page">
+	<form class="layui-form gg-form-bar border-x border-t" id="barsearchform">
+		<div class="layui-input-inline search-item" style="width:136px;">
+			<select name="fundscate_id">
+				<option value="">付款类型</option>
+				{volist name=":get_base_data('funds_cate')" id="vo"}
+				<option value="{$vo.id}">{$vo.title}</option>
+				{/volist}
+			</select>
+		</div>
+		<div class="layui-input-inline search-item" style="width:100px;">
+			<select name="paytype_id">
+				<option value="">付款方式</option>
+				{volist name=":get_base_data('pay_type')" id="vo"}
+				<option value="{$vo.id}">{$vo.title}</option>
+				{/volist}	
+			</select>
+		</div>
+		<div class="layui-input-inline" style="width:175px;">
+			<input type="text" class="layui-input" id="confirm_time" placeholder="选择确认时间" readonly name="confirm_time">
+		</div>
+		<div class="layui-input-inline" style="width:175px;">
+			<input type="text" class="layui-input" id="pay_time" placeholder="选择付款时间" readonly name="pay_time">
+		</div>
+		<div class="layui-input-inline" style="width:150px">
+			<button class="layui-btn layui-btn-normal" lay-submit="" lay-filter="table-search"><i class="layui-icon layui-icon-search mr-1"></i>搜索</button>
+			<button type="reset" class="layui-btn layui-btn-reset" lay-filter="table-reset">清空</button>
+		</div>
+	</form>
+	<table class="layui-hide" id="test" lay-filter="test"></table>
+</div>
+<script type="text/html" id="toolbarDemo">
+<div class="layui-btn-container">
+    <h3 class="h3-title" style="height:32px;">付款列表</h3>
+</div>
+</script>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+<script>
+	const moduleInit = ['tool','tablePlus','laydatePlus'];
+	function gouguInit() {
+		var table = layui.tablePlus, tool = layui.tool, laydatePlus = layui.laydatePlus;
+		//日期范围
+		var confirm_time = new laydatePlus({'target':'confirm_time'});
+		var pay_time = new laydatePlus({'target':'pay_time'});
+		
+		layui.pageTable = table.render({
+			elem: "#test"
+			,toolbar: "#toolbarDemo"
+			,url: "/finance/payment/record"
+			,page: true
+			,limit: 20
+			,cellMinWidth: 60
+			,height: 'full-115'
+			,totalRow: true
+			,cols: [
+				[
+					{
+						field: 'id',
+						title: 'ID号',
+						align: 'center',
+						width: 80,
+						totalRowText: '<div style="text-align:right">合计</div>'
+					},{
+						field: 'amount',
+						title: '付款金额(元)',
+						style: 'color:#16b777',
+						align: 'right',
+						width: 120,
+						totalRow: function (d) {return d.TOTAL_ROW.amount}
+					},{
+						field: 'pay_time',
+						title: '付款时间',
+						align: 'center',
+						width: 130
+					},{
+						field: 'remarks',
+						title: '付款备注',
+						minWidth: 200,
+					},{
+						field: 'fundscate',
+						title: '付款类型',
+						align: 'center',
+						width: 80
+					},{
+						field: 'paytype',
+						title: '付款方式',
+						align: 'center',
+						width: 90
+					},{
+						field: 'subject',
+						title: '付款主体',
+						minWidth: 200
+					},{
+						field: 'transaction_code',
+						minWidth: 200,	
+						title: '付款交易单号'
+					},{
+						field: 'ticket',
+						minWidth: 200,	
+						title: '关联进项发票号'
+					},{
+						field: 'purchase',
+						title: '关联采购合同',
+						minWidth: 200
+					},{
+						field: 'supplier',
+						title: '关联供应商',
+						minWidth: 200
+					},{
+						field: 'project',
+						title: '关联项目',
+						minWidth: 200
+					}
+					,{field:'confirm_admin',title: '付款确认人',width:90,align:'center'}
+					,{field:'confirm_time', title: '付款确认时间',width:150,align:'center'}
+					,{
+						field: 'admin_name',
+						title: '登记人',
+						align: 'center',
+						width: 80
+					},{
+						field: 'department',
+						title: '所属部门',
+						align: 'center',
+						width: 100
+					},{
+						field: 'create_time',
+						title: '登记时间',
+						align: 'center',
+						width: 150
+					},{
+						field: 'right',
+						fixed: 'right',
+						title: '操作',
+						width: 60,
+						align: 'center',
+						templet:function(d){
+							var html='<span class="layui-btn layui-btn-normal layui-btn-xs" lay-event="view">详情</span>';
+							return html;
+						}
+					}
+				]
+			]
+		});
+
+		//监听行工具事件
+		table.on('tool(test)', function(obj) {
+			var data = obj.data;
+			if (obj.event === 'view') {
+				tool.side("/finance/payment/view?id="+data.id);
+				return;
+			}
+		});
+	}
+</script>
+{/block}
+<!-- /脚本 -->

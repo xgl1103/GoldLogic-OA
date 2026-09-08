@@ -1,0 +1,14 @@
+# 运行时产物
+gouguoa/runtime/
+gouguoa/.user.ini
+env/nginx-1.26.3/logs/*
+env/nginx-1.26.3/temp/*
+
+# 已放弃的微信小程序方案（体积大且不再使用）
+miniai/
+
+# 会话临时文件
+api_test.php
+*.log
+.idea/
+.workbuddy/

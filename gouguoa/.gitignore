@@ -1,0 +1,8 @@
+/.idea
+/.vscode
+/.gitee
+*.log
+*.env
+/runtime/*
+/public/backup/*
+/app/crud/file/*

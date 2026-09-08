@@ -1,0 +1,147 @@
+{extend name="../../base/view/common/base" /}
+<!-- 主体 -->
+{block name="body"}
+<div class="layui-form p-page">
+	<h3 class="pb-2">收款详情</h3>
+	<table class="layui-table layui-table-form">
+		<tr>
+			<td class="layui-td-gray-2">收款交易单号</td>
+			<td colspan="3">{$detail.transaction_code}</td>
+			<td class="layui-td-gray-2">收款金额</td>
+			<td class="blue">{$detail.amount} 元</td>
+		</tr>
+		<tr>
+			<td class="layui-td-gray">款项类型</td>
+			<td>{$detail.fundscate}</td>
+			<td class="layui-td-gray">付款方式</td>
+			<td>{$detail.paytype}</td>
+			<td class="layui-td-gray">收款时间</td>
+			<td>{$detail.enter_time}</td>
+		</tr>
+		<tr>
+			<td class="layui-td-gray">收款主体</td>
+			<td colspan="3">{$detail.subject}</td>
+			<td class="layui-td-gray">收款账户</td>
+			<td>{$detail.account|default=''}</td>
+		</tr>
+		<tr>
+			<td class="layui-td-gray">关联销项发票</td>
+			<td colspan="3">{$detail.invoice|default='-'}</td>
+			<td class="layui-td-gray">关联客户</td>
+			<td>{$detail.customer|default='-'}</td>
+		</tr>
+		<tr>
+			<td class="layui-td-gray">关联销售合同</td>
+			<td colspan="3">{$detail.contract|default='-'}</td>
+			<td class="layui-td-gray">关联项目</td>
+			<td>{$detail.project|default='-'}</td>
+		</tr>
+		{notempty name="$detail.remark"}
+		<tr>
+			<td class="layui-td-gray">备注信息</td>
+			<td colspan="5">{$detail.remark}</td>
+		</tr>
+		{/notempty}
+		{notempty name="$detail.file_ids"}
+		<tr>
+			<td class="layui-td-gray">相关附件</td>
+			<td colspan="5" style="padding:4px 2px;">
+				<div class="layui-row">
+					{volist name="$detail.file_array" id="vo"}
+					<div class="layui-col-md4" id="uploadFile{$vo.id}">{:file_card($vo,'view')}</div>
+					{/volist}
+				</div>
+			</td>
+		</tr>
+		{/notempty}
+		{eq name="$detail.check_status" value="2"}
+		<tr>
+			<td class="layui-td-gray">到账状态</td>
+			<td>
+				{eq name="$detail.status" value="1"}<span class="red">未确认到账</span>{/eq}
+				{eq name="$detail.status" value="2"}<span class="green">已确认到账</span>{/eq}
+			</td>
+			<td class="layui-td-gray-2">到账确认时间</td>
+			<td>{$detail.confirm_time|default='-'}</td>
+			<td class="layui-td-gray-2">到账确认人</td>
+			<td>{$detail.confirm_admin|default='-'}</td>
+		</tr>
+		{/eq}
+		{gt name="$detail.back_status" value="0"}
+		<tr>
+			<td class="layui-td-gray">退款状态</td>
+			<td>
+				{eq name="$detail.back_status" value="1"}<span class="yellow">部分退款</span>{/eq}
+				{eq name="$detail.back_status" value="2"}<span class="red">已退款</span>{/eq}
+			</td>
+			<td class="layui-td-gray-2">退款金额</td>
+			<td colspan="3" class="red">{$detail.back_amount|default='-'}</td>
+		</tr>
+		<tr>
+			<td class="layui-td-gray">退款记录</td>
+			<td colspan="5">
+				<table class="layui-table layui-table-min" style="margin:0;">
+					<tr>
+						<th style="width:60px;">序号</th>
+						<th style="width:150px;">退款金额(元)</th>
+						<th style="width:200px;">退款日期</th>
+						<th style="width:100px;">审批状态</th>
+						<th style="width:100px;">退款状态</th>
+						<th style="width:150px;">申请人</th>
+						<th style="width:150px;">申请时间</th>
+						<th style="width:60px;">操作</th>
+					</tr>
+					{volist name="$detail.refund" id="vo"}
+					<tr>
+						<td>{$vo.id}</td>
+						<td>{$vo.amount}</td>
+						<td>{$vo.back_time | date='Y-m-d'}</td>
+						<td>
+							<span class="check-status-color-{$vo.check_status}">{:check_status_name($vo.check_status)}</span>
+						</td>
+						<td>
+							{eq name="$vo.check_status" value="2"}
+								{eq name="$vo.status" value="1"}<span class="red">未确认</span>{/eq}
+								{eq name="$vo.status" value="2"}<span class="green">已确认</span>{/eq}
+							{else/}
+								-
+							{/eq}
+						</td>
+						<td>{$vo.admin|default=''}</td>
+						<td>{$vo.create_time | date='Y-m-d H:i:s'}</td>
+						<td><span class="layui-btn layui-btn-normal layui-btn-xs side-a" data-href="/finance/refund/view?id={$vo.id}">详情</span></td>
+					</tr>
+					{/volist}
+				</table>
+			</td>
+		</tr>
+		{/gt}
+	</table>
+	<div id="checkBox" class="pt-3" data-status="{$detail.check_status}" data-id="{$detail.id}" data-checkflowid="{$detail.check_flow_id}"></div>
+</div>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+<script>
+const status = {$detail.status};
+const moduleInit = ['tool','oaCheck','uploadPlus'];
+function gouguInit() {
+	var form = layui.form,tool=layui.tool, oaCheck=layui.oaCheck,uploadPlus = layui.uploadPlus;	
+	oaCheck.init({
+		check_name:'income',
+		verify_reversed :function(){
+			if(status==2){
+				layer.msg('该收款已确认，不支持反确认');
+				return false;
+			}
+			else{
+				return true;
+			}
+		}
+	});
+}
+</script>
+{/block}
+<!-- /脚本 -->
