@@ -47,7 +47,8 @@ class Login
         }
 
         $admin = Db::name('Admin')->where(['username' => $param['username'],'delete_time' => 0])->find();
-        if (empty($admin)) {
+        if (empty($admin) && ctype_digit((string)$param['username']) && (int)$param['username'] > 0) {
+            // 仅允许纯数字（真实手机号）走 mobile 兜底；防止非数字用户名被 MySQL 整型转换成 0 命中 mobile=0 的账号
             $admin = Db::name('Admin')->where(['mobile' => $param['username'],'delete_time' => 0])->find();
             if (empty($admin)) {
                 return to_assign(1, '用户名或手机号码错误');

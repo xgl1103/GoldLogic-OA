@@ -1,62 +1,64 @@
 @echo off
 chcp 936 >nul
-title GoldLogic OA Ò»¼ü°²×°
+title GoldLogic OA ä¸€é”®å®‰è£…
+set ROOT=%~dp0
+set ENV=%ROOT%oa-env
 echo ============================================
-echo   GoldLogic OA Ò»¼ü°²×°½Å±¾
-echo   Ä¿±ê²¼¾Ö: C:\Code\oa-env  (¹Ì¶¨Â·¾¶, Îð¸Ä)
+echo   GoldLogic OA ä¸€é”®å®‰è£…è„šæœ¬
+echo   ç›®æ ‡å¸ƒå±€: %ENV%
 echo ============================================
 echo.
 
-if exist "C:\Code\oa-env\php\php.exe" (
-    echo [OK] PHP ÒÑ°²×°, Ìø¹ý
+if exist "%ENV%\php\php.exe" (
+    echo [OK] PHP å·²å®‰è£…, è·³è¿‡
     goto mariadb
 )
 
-echo [1/3] ÕýÔÚÏÂÔØ PHP 8.2 NTS ±ãÐ¯°æ (Ô¼30MB)...
-if not exist "C:\Code\oa-env" mkdir "C:\Code\oa-env"
-powershell -Command "$ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri 'https://windows.php.net/downloads/releases/archives/php-8.2.29-nts-Win32-vs16-x64.zip' -OutFile 'C:\Code\oa-env\php.zip'"
+echo [1/3] æ­£åœ¨ä¸‹è½½ PHP 8.2 NTS ä¾¿æºç‰ˆ (çº¦30MB)...
+if not exist "%ENV%" mkdir "%ENV%"
+powershell -Command "$ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri 'https://windows.php.net/downloads/releases/archives/php-8.2.29-nts-Win32-vs16-x64.zip' -OutFile '%ENV%\php.zip'"
 if errorlevel 1 (
-    echo [´íÎó] PHP ÏÂÔØÊ§°Ü, ÇëÊÖ¶¯ÏÂÔØ:
+    echo [é”™è¯¯] PHP ä¸‹è½½å¤±è´¥, è¯·æ‰‹åŠ¨ä¸‹è½½:
     echo   https://windows.php.net/downloads/releases/archives/php-8.2.29-nts-Win32-vs16-x64.zip
-    echo   ½âÑ¹µ½ C:\Code\oa-env\php ºóÖØÐÂÔËÐÐ±¾½Å±¾
+    echo   è§£åŽ‹åˆ° %ENV%\php åŽé‡æ–°è¿è¡Œæœ¬è„šæœ¬
     pause & exit /b 1
 )
-powershell -Command "$ProgressPreference='SilentlyContinue'; Expand-Archive -Path 'C:\Code\oa-env\php.zip' -DestinationPath 'C:\Code\oa-env\php' -Force"
-del "C:\Code\oa-env\php.zip"
-copy /Y "%~dp0env\php.ini" "C:\Code\oa-env\php\php.ini" >nul
-echo [OK] PHP ¾ÍÐ÷ (º¬ php.ini, À©Õ¹ÒÑÅäºÃ)
+powershell -Command "$ProgressPreference='SilentlyContinue'; Expand-Archive -Path '%ENV%\php.zip' -DestinationPath '%ENV%\php' -Force"
+del "%ENV%\php.zip"
+copy /Y "%ROOT%env\php.ini" "%ENV%\php\php.ini" >nul
+echo [OK] PHP å°±ç»ª (å« php.ini, æ‰©å±•å·²é…å¥½)
 
 :mariadb
-if exist "C:\Code\oa-env\mariadb\mariadb-10.11.10-winx64\bin\mysqld.exe" (
-    echo [OK] MariaDB ÒÑ°²×°, Ìø¹ý
+if exist "%ENV%\mariadb\mariadb-10.11.10-winx64\bin\mysqld.exe" (
+    echo [OK] MariaDB å·²å®‰è£…, è·³è¿‡
     goto fonts
 )
-echo [2/3] ÕýÔÚÏÂÔØ MariaDB 10.11.10 (Ô¼70MB)...
-powershell -Command "$ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri 'https://archive.mariadb.org/mariadb-10.11.10/winx64-packages/mariadb-10.11.10-winx64.zip' -OutFile 'C:\Code\oa-env\mariadb.zip'"
+echo [2/3] æ­£åœ¨ä¸‹è½½ MariaDB 10.11.10 (çº¦70MB)...
+powershell -Command "$ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri 'https://archive.mariadb.org/mariadb-10.11.10/winx64-packages/mariadb-10.11.10-winx64.zip' -OutFile '%ENV%\mariadb.zip'"
 if errorlevel 1 (
-    echo [´íÎó] MariaDB ÏÂÔØÊ§°Ü, ÇëÊÖ¶¯ÏÂÔØ:
+    echo [é”™è¯¯] MariaDB ä¸‹è½½å¤±è´¥, è¯·æ‰‹åŠ¨ä¸‹è½½:
     echo   https://archive.mariadb.org/mariadb-10.11.10/winx64-packages/mariadb-10.11.10-winx64.zip
-    echo   ½âÑ¹µ½ C:\Code\oa-env\mariadb ºóÖØÐÂÔËÐÐ±¾½Å±¾
+    echo   è§£åŽ‹åˆ° %ENV%\mariadb åŽé‡æ–°è¿è¡Œæœ¬è„šæœ¬
     pause & exit /b 1
 )
-if not exist "C:\Code\oa-env\mariadb" mkdir "C:\Code\oa-env\mariadb"
-powershell -Command "$ProgressPreference='SilentlyContinue'; Expand-Archive -Path 'C:\Code\oa-env\mariadb.zip' -DestinationPath 'C:\Code\oa-env\mariadb' -Force"
-del "C:\Code\oa-env\mariadb.zip"
-echo [OK] MariaDB ¾ÍÐ÷
+if not exist "%ENV%\mariadb" mkdir "%ENV%\mariadb"
+powershell -Command "$ProgressPreference='SilentlyContinue'; Expand-Archive -Path '%ENV%\mariadb.zip' -DestinationPath '%ENV%\mariadb' -Force"
+del "%ENV%\mariadb.zip"
+echo [OK] MariaDB å°±ç»ª
 
 :fonts
-echo [3/3] ²¼ÖÃ×ÖÌå¡¢ÅäÖÃÓë nginx...
-if not exist "C:\Code\oa-env\fonts" mkdir "C:\Code\oa-env\fonts"
-copy /Y "%~dp0env\fonts\*.ttf" "C:\Code\oa-env\fonts\" >nul
-copy /Y "%~dp0env\my.ini" "C:\Code\oa-env\mariadb\my.ini" >nul
-if not exist "C:\Code\oa-env\nginx-1.26.3" (
-    xcopy /E /I /Y "%~dp0env\nginx-1.26.3" "C:\Code\oa-env\nginx-1.26.3" >nul
+echo [3/3] å¸ƒç½®å­—ä½“ã€é…ç½®ä¸Ž nginx...
+if not exist "%ENV%\fonts" mkdir "%ENV%\fonts"
+copy /Y "%ROOT%env\fonts\*.ttf" "%ENV%\fonts\" >nul
+if not exist "%ENV%\mariadb\my.ini" copy /Y "%ROOT%env\my.ini" "%ENV%\mariadb\my.ini" >nul
+if not exist "%ENV%\nginx-1.26.3" (
+    xcopy /E /I /Y "%ROOT%env\nginx-1.26.3" "%ENV%\nginx-1.26.3" >nul
 )
 echo.
 echo ============================================
-echo   °²×°Íê³É! ÏÂÒ»²½:
-echo   1. Ë«»÷ Æô¶¯OA.bat  (»á×Ô¶¯³õÊ¼»¯Êý¾Ý¿â)
-echo   2. ä¯ÀÀÆ÷·ÃÎÊ http://127.0.0.1:8010
-echo   Ïê¼û Ì¨Ê½»ú²¿ÊðÖ¸ÄÏ.md
+echo   å®‰è£…å®Œæˆ! ä¸‹ä¸€æ­¥:
+echo   1. åŒå‡» å¯åŠ¨OA.bat  (ä¼šè‡ªåŠ¨åˆå§‹åŒ–æ•°æ®åº“)
+echo   2. æµè§ˆå™¨è®¿é—® http://127.0.0.1:8010
+echo   è¯¦è§ å°å¼æœºéƒ¨ç½²æŒ‡å—.md
 echo ============================================
 pause

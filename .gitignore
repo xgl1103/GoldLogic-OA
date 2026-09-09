@@ -12,3 +12,10 @@ api_test.php
 *.log
 .idea/
 .workbuddy/
+
+# 已弃用的原生进程版运行环境（566MB，Docker 模式不需要）
+oa-env/
+
+# PPT 项目中间产物（保留成品 pptx）
+当OA遇上AI数字员工/slides/
+当OA遇上AI数字员工-完整版/slides/

@@ -24,7 +24,7 @@ return [
     'useNoise' => true,
     // 验证码字体 不设置则随机
     // 本地调试：Windows GD 无法打开中文路径下的字体，指向英文路径的字体副本（Captcha.php 已加绝对路径支持）
-    'fontttf'  => 'C:/Code/oa-env/fonts/4.ttf',
+    'fontttf'  => '/usr/share/goldlogic/fonts/4.ttf',
     //背景颜色
     'bg'       => [243, 251, 254],
     // 验证码图片高度

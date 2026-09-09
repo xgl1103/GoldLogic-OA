@@ -7,7 +7,7 @@ return [
     'connections'     => [
         'mysql' => [
             'type'               =>  'mysql',
-            'hostname'           =>  '127.0.0.1',
+            'hostname'           =>  'mariadb',
             'database'           =>  'gouguoa',
             'username'           =>  'root',
             'password'           =>  'root123456',

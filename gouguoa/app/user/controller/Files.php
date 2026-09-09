@@ -92,6 +92,10 @@ class Files extends BaseController
                     $item['birthday_str'] = to_date($item['birthday'],'Y-m-d');
 					$item['last_login_time'] = to_date('Y-m-d H:i', $item->last_login_time);
                     $item['last_login_ip'] = empty($item['last_login_ip']) ? '-' : $item['last_login_ip'];
+					//头像：数字文件ID转真实路径（已是路径则原样保留）
+					if (!empty($item['thumb'])) {
+						$item['thumb'] = is_numeric($item['thumb']) ? get_file_thumb($item['thumb']) : $item['thumb'];
+					}
 					return $item;
                 });
             return table_assign(0, '', $list);

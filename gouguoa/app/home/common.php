@@ -13,11 +13,30 @@
 
 use think\facade\Db;
 
+//服务器系统描述：识别 Docker 容器部署时，标注真实宿主机
+function get_os_display()
+{
+    if (PHP_OS_FAMILY !== 'Linux') {
+        return PHP_OS; // 非 Linux（如直接跑在 Windows 上），原样显示
+    }
+    if (!file_exists('/.dockerenv') && !file_exists('/run/.containerenv')) {
+        return PHP_OS; // Linux 但非容器部署
+    }
+    $distro = '';
+    if (is_file('/etc/os-release')) {
+        $rel = @parse_ini_file('/etc/os-release');
+        if (!empty($rel['NAME'])) {
+            $distro = $rel['NAME'] . ' · ';
+        }
+    }
+    return $distro . 'Docker 容器 · 宿主机 Windows';
+}
+
 //获取服务器信息
 function get_system_info($key)
 {
     $system = [
-        'os' => PHP_OS,
+        'os' => get_os_display(),
         'php' => PHP_VERSION,
         'upload_max_filesize' => get_cfg_var("upload_max_filesize") ? get_cfg_var("upload_max_filesize") : "不允许上传附件",
         'max_execution_time' => get_cfg_var("max_execution_time") . "秒 ",
