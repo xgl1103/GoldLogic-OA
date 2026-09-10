@@ -10,8 +10,16 @@ echo ============================================
 echo 检查 Docker 是否在运行...
 docker info >nul 2>&1
 if errorlevel 1 (
-    echo Docker 引擎未就绪，正在打开 Docker Desktop，请稍等...
-    start "" "D:\Docker\Docker Desktop.exe"
+    echo Docker 引擎未就绪，尝试打开 Docker Desktop...
+    where "Docker Desktop" >nul 2>&1 && (start "" "Docker Desktop") || (
+        if exist "D:\Docker\Docker Desktop.exe" (start "" "D:\Docker\Docker Desktop.exe") else (
+            if exist "C:\Program Files\Docker\Docker\Docker Desktop.exe" (start "" "C:\Program Files\Docker\Docker\Docker Desktop.exe") else (
+                echo 未找到 Docker Desktop，请手动启动它后重试本脚本。
+                pause
+                exit /b 1
+            )
+        )
+    )
 )
 
 echo 等待 Docker 引擎就绪（最多 2 分钟）...
